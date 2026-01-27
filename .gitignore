@@ -1,0 +1,31 @@
+# Configuração restrita (credenciais e webhook – não versionar)
+config/configRestrito.json
+
+# Estado local da execução (opcional: permite versionar se quiser)
+# config/ultima_execucao.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+
+# Arquivos baixados pelos robôs (extratos PDF/Excel)
+downloaded_files/
+*.xlsx
+*.pdf
+
+# IDE / SO
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs e locks
+*.log
+*.lock

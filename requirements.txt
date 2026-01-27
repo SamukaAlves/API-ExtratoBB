@@ -1,0 +1,14 @@
+# API-ExtratoBB - Dependências
+# Python 3.10+ recomendado
+
+# Excel
+openpyxl>=3.1.0
+
+# HTTP / Teams webhook
+requests>=2.31.0
+
+# Automação web (Banco do Brasil)
+seleniumbase>=4.0.0
+
+# Terminal
+colorama>=0.4.6
