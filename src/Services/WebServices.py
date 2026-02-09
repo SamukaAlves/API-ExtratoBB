@@ -7,7 +7,6 @@ import os
 try:
     from seleniumbase import Driver  # Wrapper de criação de drivers multi-navegador
 except ImportError:
-    # Permite que a importação do módulo continue; erro será levantado ao instanciar
     Driver = None  # type: ignore
 
 class ConfiguracoesNavegador():
@@ -56,7 +55,6 @@ class ConfiguracoesNavegador():
     def fecha_navegador(self):
         self.driver.quit()                      
     def move_arquivo_download(self, path_destino: str, nome_arquivo: str, ano_bb='', config_restrito=None):
-    # Espera o arquivo ser baixado
         while True:
             arquivos = os.listdir(self.download_path)
             arquivo = ''

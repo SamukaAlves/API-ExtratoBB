@@ -10,7 +10,7 @@ class ServicosGerais:
     def pega_d_menos_x_dias(self, dias, data_especifica=None):
         """
         dias=1: retorna a data 1 dia antes de data_especifica
-        dias=0: retorna lista de datas desde data_especifica até HOJE
+        dias=0: retorna lista de datas desde data_especifica até hoje
         """
         hoje = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         
@@ -28,7 +28,7 @@ class ServicosGerais:
             return [resultado]
         
         elif dias == 0:
-            # Lista desde data_base até hoje (inclusive)
+            # Lista desde data_base até hoje 
             lista_datas = []
             data_atual = data_base
             

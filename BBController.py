@@ -53,11 +53,9 @@ try:
                     dados_extrato = teams_service.processar_excel_extrato(caminho_excel)
                     
                     if dados_extrato:
-                        extrato_formatado = teams_service.formatar_extrato_txt(dados_extrato, carteira)
-                        
                         if webhook_url:
                             print(f"📤 Enviando para Teams...")
-                            teams_service.enviar_extrato_teams(extrato_formatado)
+                            teams_service.enviar_extrato_teams(dados_extrato, carteira)
                         else:
                             print(f"⚠️  Webhook não configurado - extrato não enviado")
 

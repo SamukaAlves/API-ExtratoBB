@@ -224,24 +224,102 @@ class TeamsService:
         t.append(div)
         
         return "\n".join(t)
-    
-    def enviar_extrato_teams(self, extrato_txt: str):
-        """Envia extrato para Teams"""
+
+    def _montar_adaptive_card_extrato(self, dados: Dict, carteira: str) -> list:
+        """Monta o body do Adaptive Card: formato igual ao extrato em texto, só os valores coloridos (C=azul, D=vermelho)."""
+        W = 59
+        sep = "=" * (W - 1)
+        div = "-" * (W - 1)
+        body = []
+
+        def _line(txt: str):
+            """Uma linha em monospace, cor padrão."""
+            body.append({"type": "TextBlock", "text": txt, "wrap": True, "fontType": "monospace"})
+
+        def _line_com_valor(prefixo: str, valor_formatado: str, tipo: str, alinhar_valor: bool = True):
+            """Uma linha em que só o valor (número + C/D) tem cor: C=azul, D=vermelho."""
+            cor = "accent" if tipo == "C" else "attention"
+            valor_txt = f"{valor_formatado:>12} {tipo}" if alinhar_valor else f"{valor_formatado} {tipo}"
+            body.append({
+                "type": "RichTextBlock",
+                "inlines": [
+                    {"type": "TextRun", "text": prefixo, "fontType": "monospace"},
+                    {"type": "TextRun", "text": valor_txt, "fontType": "monospace", "color": cor}
+                ]
+            })
+
+        # Título (separador com 9 "=" a menos que o restante)
+        titulo = f"Extrato Bancário - {datetime.now().strftime('%d/%m/%Y - %H:%M')}"
+        _line(titulo)
+        _line("=" * (W - 1 - 9))
+        _line(f"Extrato conta corrente - {carteira}")
+        _line(datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
+        _line(div)
+
+        _line(f"Agência: {dados['agencia'] or 'N/A'}")
+        _line(f"Conta: {dados['conta'] or 'N/A'}")
+        _line(div)
+
+        _line("Lançamentos")
+        _line(div)
+        _line(f"{'Data':<10} {'Histórico':<22} {'Doc':<10} {'Valor R$':>14}")
+        _line(div)
+
+        # Saldo Anterior: prefixo fixo, só o valor colorido
+        if dados.get("saldo_anterior"):
+            sa = dados["saldo_anterior"]
+            prefixo_sa = f"{'Saldo Anterior':<22} {'':<10} "
+            _line_com_valor(prefixo_sa, sa['formatado'], sa.get('tipo', 'C'))
+
+        # Lançamentos: prefixo = data + hist + doc; só valor colorido
+        for lanc in dados.get("lancamentos", []):
+            v = lanc["valor"]
+            hist = (lanc.get('historico') or '')[:22]
+            doc = (lanc.get('documento') or '')[:10]
+            prefixo = f"{lanc.get('data',''):<10} {hist:<22} {doc:<10} "
+            _line_com_valor(prefixo, v['formatado'], v.get('tipo', 'C'))
+            if lanc.get('detalhamento') and str(lanc['detalhamento']).strip():
+                det = str(lanc['detalhamento'])[:54].strip()
+                _line(f"  + {det}")
+
+        _line(div)
+
+        # Saldo Atual: prefixo "Saldo Atual: ", só valor colorido (sem alinhamento fixo)
+        if dados.get("saldo_atual"):
+            s = dados["saldo_atual"]
+            _line_com_valor("Saldo Atual: ", s['formatado'], s.get('tipo', 'C'), alinhar_valor=False)
+        if dados.get("data_debito_juros"):
+            _line(f"Dt.Déb.Juros: {dados['data_debito_juros']}")
+        if dados.get("data_debito_iof"):
+            _line(f"Dt.Déb.IOF: {dados['data_debito_iof']}")
+        _line(div)
+
+        return body
+
+    def enviar_extrato_teams(self, dados: Dict, carteira: str):
+        """Envia extrato para Teams como Adaptive Card (créditos em azul, débitos em vermelho)."""
         if not self.webhook_url:
             print("⚠️  Webhook do Teams não configurado")
             return False
-        
-        titulo = f"Extrato Bancário - {datetime.now().strftime('%d/%m/%Y - %H:%M')}"
-        
-        mensagem = {
-            "@type": "MessageCard",
-            "@context": "https://schema.org/extensions",
-            "summary": "Extrato Bancário do Dia",
-            "themeColor": "0078D4",
-            "title": titulo,
-            "sections": [{"text": f"```\n{extrato_txt}\n```"}]
+
+        body = self._montar_adaptive_card_extrato(dados, carteira)
+        card = {
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "type": "AdaptiveCard",
+            "version": "1.2",
+            "body": body
         }
-        
+        mensagem = {
+            "type": "message",
+            "attachments": [
+                {
+                    "contentType": "application/vnd.microsoft.card.adaptive",
+                    "contentUrl": None,
+                    "content": card
+                }
+            ]
+        }
+
         try:
             response = requests.post(
                 self.webhook_url,
@@ -249,7 +327,7 @@ class TeamsService:
                 data=json.dumps(mensagem),
                 timeout=10
             )
-            
+
             if response.status_code == 200:
                 print(f"✅ Extrato enviado para o Teams!")
                 return True
