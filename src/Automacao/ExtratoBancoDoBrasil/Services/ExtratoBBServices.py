@@ -98,6 +98,7 @@ class ExtratosBB():
         definir_data_fim.clear()
         definir_data_fim.send_keys(dia_extrato)
         self.ano = dia.strftime('%Y')
+        self.mes = dia.strftime('%m')
         self.nome_dia_string = dia.strftime('%d_%m_%Y')
     
     def login_fundo(self,conta,senha_8_dig):

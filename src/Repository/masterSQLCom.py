@@ -12,7 +12,7 @@ class MasterSQLComunication:
             try:
                 with open(self.log_file, 'r') as f:
                     data = json.load(f)
-                    ultima = data.get(str(id_bot), '2026-01-01')
+                    ultima = data.get(str(id_bot), '2026-02-20')
                     print(f"Última execução registrada: {ultima}")
                     return ultima
             except:

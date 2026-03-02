@@ -1,5 +1,14 @@
 {
     "banco_do_brasil": {
         "site": "https://autoatendimento2.bb.com.br/apf-apj-acesso/index.html?origemLogin=bbdigital&ambiente=WEB_PESSOA_JURIDICA_CHAVEJ_EMPRESA&tipoAcesso=chaveJ&segmento=emp#/transacao/lista-logins/0"
+    },
+    "scheduler": {
+        "horarios_execucao": ["09:00", "12:00", "15:00"],
+        "comment_horarios": "Horários em que a automação deve executar (formato HH:MM)",
+        "dias_semana": [0, 1, 2, 3, 4],
+        "comment_dias": "Dias da semana: 0=segunda, 1=terça, 2=quarta, 3=quinta, 4=sexta, 5=sábado, 6=domingo",
+        "max_tentativas": 3,
+        "intervalo_retry_segundos": 60,
+        "intervalo_verificacao_segundos": 30
     }
 }

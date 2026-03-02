@@ -5,8 +5,9 @@ from datetime import datetime
 from typing import Dict, Optional
 
 class TeamsService:
-    def __init__(self, webhook_url: str):
+    def __init__(self, webhook_url: str, id_bot: Optional[int] = None):
         self.webhook_url = webhook_url
+        self.id_bot = id_bot
     
     def _celula_e_data(self, val):
         """Retorna (True, str_data) se o valor for data (datetime ou dd/mm/yyyy), senão (False, None)."""
@@ -330,6 +331,13 @@ class TeamsService:
 
             if response.status_code == 200:
                 print(f"✅ Extrato enviado para o Teams!")
+                # Atualiza última execução se id_bot informado
+                try:
+                    if self.id_bot:
+                        from src.Repository.masterSQLCom import MasterSQLComunication
+                        MasterSQLComunication().upload_log(self.id_bot)
+                except Exception:
+                    pass
                 return True
             else:
                 print(f"❌ Erro: {response.status_code}")

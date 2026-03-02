@@ -18,24 +18,25 @@ try:
         
         # Inicializar serviço do Teams
         webhook_url = bancoBB.config_restrito.get('teams', {}).get('webhook_url', '')
-        teams_service = TeamsService(webhook_url)
+        teams_service = TeamsService(webhook_url, id_bot)
         
         # Data de hoje
         hoje = datetime.now().date()
         
         for carteira, dados in bancoBB.config_restrito['carteiras'].items():
             print(f"\n{'='*60}")
-            print(f"🏦 Processando carteira: {carteira}")
+            print(f" Processando carteira: {carteira}")
             print(f"{'='*60}\n")
             
             bancoBB.fazer_login(dados['chave_j'], dados['senhabb'], dados['senha8bb'])
             bancoBB.acessar_relatorios()
 
             for dia in bancoBB.dias_atualizar:
-                print(f"\n📅 Processando dia: {dia.strftime('%d/%m/%Y')}")
+                print(f"\n Processando dia: {dia.strftime('%d/%m/%Y')}")
                 
                 bancoBB.selecionar_dia_extratos(dia)
-                pasta_final = os.path.abspath(f"{bancoBB.config_restrito['enderecos']['carteira']}/{dia.year}")
+                mes = dia.strftime('%m')
+                pasta_final = os.path.abspath(f"{bancoBB.config_restrito['enderecos']['carteira']}/Extratos_Bancarios/{carteira}/{dia.year}/{mes}")
                 
                 bancoBB.login_fundo(dados['num_conta'], dados['senha8bb'])
                 
@@ -49,24 +50,24 @@ try:
                 
                 # Processar e enviar APENAS extrato de HOJE
                 if dia.date() == hoje and os.path.exists(caminho_excel):
-                    print(f"📊 Processando extrato de hoje...")
+                    print(f" Processando extrato de hoje...")
                     dados_extrato = teams_service.processar_excel_extrato(caminho_excel)
                     
                     if dados_extrato:
                         if webhook_url:
-                            print(f"📤 Enviando para Teams...")
+                            print(f" Enviando para Teams...")
                             teams_service.enviar_extrato_teams(dados_extrato, carteira)
                         else:
-                            print(f"⚠️  Webhook não configurado - extrato não enviado")
+                            print(f" Webhook não configurado - extrato não enviado")
 
             bancoBB.sair_sessao()
 
         bancoBB.fecha_navegador()
         sql_con.upload_log(id_bot)
-        print(f"\n✅ Processo concluído!")
+        print(f"\n Processo concluído!")
 
 except Exception as e:
-    print(f"\n❌ Erro: {e}")
+    print(f"\n Erro: {e}")
     erro_completo = traceback.format_exc()
     sql_con.upload_log(id_bot, "1 - " + str(e) + " " + erro_completo)
     

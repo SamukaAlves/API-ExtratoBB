@@ -68,16 +68,44 @@ class ConfiguracoesNavegador():
 
         caminhoArquivo = os.path.join(self.download_path, arquivo)
 
-        if ano_bb and config_restrito:
-            # Usar caminhos do config
+        if config_restrito:
+            # Extrair ano e mês do path_destino (formato: .../Extratos_Bancarios/CARTEIRA/YYYY/MM)
+            path_parts = path_destino.replace('\\', '/').split('/')
+            ano = path_parts[-2] if len(path_parts) >= 2 else ano_bb
+            mes = path_parts[-1] if len(path_parts) >= 1 else '00'
+            
+            # Usar caminhos do config com estrutura ano/mes
             path_copy_restrito = os.path.join(
                 config_restrito.get('enderecos', {}).get('restrito', 'C:\\Users\\samuel.alves\\Funpresp-Jud\\Arquivos - GETES\\_RESTRITO\\Extratos_Diarios'),
-                ano_bb
+                ano,
+                mes
             )
+            # Tentar extrair o nome do perfil a partir do nome do arquivo (formato esperado: Extrato_BB_<perfil>_DD_MM_YYYY.ext)
+            perfil = None
+            try:
+                if nome_arquivo.startswith('Extrato_BB_'):
+                    core = nome_arquivo[len('Extrato_BB_'):]
+                    core_no_ext = os.path.splitext(core)[0]
+                    # rsplit a partir da direita para isolar a parte do nome do perfil mesmo se contiver underscores
+                    parts = core_no_ext.rsplit('_', 3)
+                    perfil = parts[0] if parts else None
+            except Exception:
+                perfil = None
+
+            if perfil:
+                path_copy_restrito = os.path.join(path_copy_restrito, perfil)
+
             os.makedirs(path_copy_restrito, exist_ok=True)
             shutil.copy(caminhoArquivo, os.path.join(path_copy_restrito, nome_arquivo))
             
-            path_copy_publico = config_restrito.get('enderecos', {}).get('publico', 'C:\\Users\\samuel.alves\\Funpresp-Jud\\Arquivos - GETES\\_PUBLICO\\Extratos_Diarios')
+            path_copy_publico = os.path.join(
+                config_restrito.get('enderecos', {}).get('publico', 'C:\\Users\\samuel.alves\\Funpresp-Jud\\Arquivos - GETES\\_PUBLICO\\Extratos_Diarios'),
+                ano,
+                mes
+            )
+            if perfil:
+                path_copy_publico = os.path.join(path_copy_publico, perfil)
+
             os.makedirs(path_copy_publico, exist_ok=True)
             shutil.copy(caminhoArquivo, os.path.join(path_copy_publico, nome_arquivo))
 
