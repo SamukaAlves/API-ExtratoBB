@@ -2,6 +2,10 @@
 
 Automação para baixar extratos da conta corrente do Banco do Brasil, processar os arquivos Excel e enviar um resumo formatado para um canal do **Microsoft Teams** via webhook.
 
+> 📌 **Agendamento**: veja (scheduler residente)  `SCHEDULER_SIMPLE_README.md` para instruções de uso com agendamento automático.
+>
+> 🧼 **Log sanitizado**: todos os registros têm acentos e caracteres especiais removidos automaticamente para evitar problemas de codificação.
+
 ## O que faz
 
 - Acessa o portal do BB (autoatendimento PJ, Chave J)
@@ -10,6 +14,7 @@ Automação para baixar extratos da conta corrente do Banco do Brasil, processar
 - Processa o Excel do **dia atual**: extrai saldo anterior, lançamentos e saldo atual
 - Envia um extrato compacto e legível para o Teams (incluindo visualização em celular)
 - Registra última execução em `config/ultima_execucao.json`
+- Todos os logs são sanitizados automaticamente: acentos e caracteres especiais são removidos para evitar problemas de encoding
 
 ## Estrutura do projeto
 
@@ -69,6 +74,7 @@ API-ExtratoBB/
      - webhook do Teams em `banco_do_brasil.teams.webhook_url`
 
 ## Uso
+
 
 ### Windows (batch)
 
@@ -130,6 +136,8 @@ Em `config/configRestrito.json` é onde ficam dados sensíveis. Exemplo de estru
 
 ## Subir para o GitHub (ignorando configRestrito)
 
+*O README principal não descreve o scheduler; veja `SCHEDULER_README.md` para instruções de agendamento residente e `SCHEDULER_SIMPLE_README.md` para a versão compacta.*
+
 O projeto já usa um **`.gitignore`** que ignora:
 
 - **config/configRestrito.json** – credenciais e webhook (nunca sobe)
@@ -144,7 +152,7 @@ Para publicar no repositório:
    ```bash
    git init
    git add .
-   git status   # confira: configRestrito.json NÃO deve aparecer
+   git status   
    ```
 
 3. Faça o primeiro commit e envie:

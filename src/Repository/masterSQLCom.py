@@ -4,8 +4,25 @@ import os
 
 class MasterSQLComunication:
     def __init__(self):
+        # garantir stdout em utf-8
+        try:
+            import sys
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:
+            pass
         self.log_file = 'config/ultima_execucao.json'
     
+    def _safe_print(self, text: str):
+        try:
+            print(text)
+        except UnicodeEncodeError:
+            try:
+                import sys
+                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            except Exception:
+                pass
+            print(text.encode('utf-8', errors='replace').decode('utf-8'))
+
     def ultima_execucao(self, id_bot):
         # Tenta ler do arquivo de log
         if os.path.exists(self.log_file):
@@ -13,7 +30,7 @@ class MasterSQLComunication:
                 with open(self.log_file, 'r') as f:
                     data = json.load(f)
                     ultima = data.get(str(id_bot), '2026-02-20')
-                    print(f"Última execução registrada: {ultima}")
+                    self._safe_print(f"Última execução registrada: {ultima}")
                     return ultima
             except:
                 pass
@@ -24,7 +41,7 @@ class MasterSQLComunication:
     
     def upload_log(self, id_bot, erro=None):
         if erro:
-            print(f"Erro: {erro}")
+            self._safe_print(f"Erro: {erro}")
         else:
             # Salva a data de hoje como última execução
             hoje = datetime.now().strftime('%Y-%m-%d')
@@ -41,4 +58,4 @@ class MasterSQLComunication:
             with open(self.log_file, 'w') as f:
                 json.dump(data, f, indent=4)
             
-            print(f"✅Execução bem-sucedida registrada para {hoje}")
+            self._safe_print(f"Execução bem-sucedida registrada para {hoje}")

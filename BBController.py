@@ -1,4 +1,28 @@
 import sys
+# forçar saída UTF-8 no console Windows para evitar UnicodeEncodeError
+try:
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+except Exception:
+    pass
+
+# interceptar todas as chamadas a print e remover acentos/caracteres especiais
+import builtins, unicodedata, re
+_orig_print = print
+
+def _sanitize_text(s: str) -> str:
+    # normaliza e elimina marcas de acentuação
+    nfkd = unicodedata.normalize('NFKD', s)
+    no_accents = ''.join(c for c in nfkd if not unicodedata.combining(c))
+    # filtra para ascii imprimível (32-126)
+    return re.sub(r"[^\x20-\x7E]", '', no_accents)
+
+
+def _print(*args, **kwargs):
+    new_args = [ _sanitize_text(str(a)) for a in args ]
+    return _orig_print(*new_args, **kwargs)
+
+builtins.print = _print
+
 sys.path.append("")
 import traceback
 import os
@@ -36,7 +60,9 @@ try:
                 
                 bancoBB.selecionar_dia_extratos(dia)
                 mes = dia.strftime('%m')
-                pasta_final = os.path.abspath(f"{bancoBB.config_restrito['enderecos']['carteira']}/Extratos_Bancarios/{carteira}/{dia.year}/{mes}")
+                # decide base de armazenamento: usa 'carteira' se existir ou fallback para 'restrito'
+                base_path = bancoBB.config_restrito['enderecos'].get('carteira') or bancoBB.config_restrito['enderecos'].get('restrito')
+                pasta_final = os.path.abspath(f"{base_path}/Extratos_Bancarios/{carteira}/{dia.year}/{mes}")
                 
                 bancoBB.login_fundo(dados['num_conta'], dados['senha8bb'])
                 

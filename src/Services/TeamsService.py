@@ -6,6 +6,13 @@ from typing import Dict, Optional
 
 class TeamsService:
     def __init__(self, webhook_url: str, id_bot: Optional[int] = None):
+        # garantir que o console Python esteja em utf-8 (windows)
+        try:
+            import sys
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:
+            pass
+
         self.webhook_url = webhook_url
         self.id_bot = id_bot
     
@@ -123,7 +130,7 @@ class TeamsService:
             return dados
             
         except Exception as e:
-            print(f"❌ Erro ao processar Excel: {e}")
+            print(f"Erro ao processar Excel: {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -157,7 +164,7 @@ class TeamsService:
                 'formatado': self._formatar_valor(valor_float)
             }
         except Exception as e:
-            print(f"⚠️  Erro ao extrair valor de '{cell_value}': {e}")
+            print(f"Erro ao extrair valor de '{cell_value}': {e}")
             return {'valor': 0, 'tipo': 'C', 'formatado': '0,00'}
     
     def _formatar_valor(self, valor) -> str:
@@ -297,10 +304,23 @@ class TeamsService:
 
         return body
 
+    def _safe_print(self, text: str):
+        """Print que nunca falha por encoding; substitui caracteres inválidos."""
+        try:
+            print(text)
+        except UnicodeEncodeError:
+            # forçar ambiente a utf-8 e substituir
+            try:
+                import sys
+                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            except Exception:
+                pass
+            print(text.encode('utf-8', errors='replace').decode('utf-8'))
+
     def enviar_extrato_teams(self, dados: Dict, carteira: str):
         """Envia extrato para Teams como Adaptive Card (créditos em azul, débitos em vermelho)."""
         if not self.webhook_url:
-            print("⚠️  Webhook do Teams não configurado")
+            self._safe_print("Webhook do Teams não configurado")
             return False
 
         body = self._montar_adaptive_card_extrato(dados, carteira)
@@ -330,7 +350,7 @@ class TeamsService:
             )
 
             if response.status_code == 200:
-                print(f"✅ Extrato enviado para o Teams!")
+                self._safe_print("Extrato enviado para o Teams!")
                 # Atualiza última execução se id_bot informado
                 try:
                     if self.id_bot:
@@ -340,11 +360,11 @@ class TeamsService:
                     pass
                 return True
             else:
-                print(f"❌ Erro: {response.status_code}")
-                print(f"   Resposta: {response.text}")
+                self._safe_print(f"Erro: {response.status_code}")
+                self._safe_print(f"   Resposta: {response.text}")
                 return False
         except Exception as e:
-            print(f"❌ Erro: {e}")
+            self._safe_print(f"Erro: {e}")
             return False
     
     def enviar_mensagem_erro(self, erro: str):
@@ -356,12 +376,12 @@ class TeamsService:
             "@type": "MessageCard",
             "@context": "https://schema.org/extensions",
             "themeColor": "FF0000",
-            "title": "❌ Erro no Bot de Extratos",
+            "title": "Erro no Bot de Extratos",
             "text": f"```\n{erro[:500]}\n```"
         }
         
         try:
             requests.post(self.webhook_url, headers={"Content-Type": "application/json"}, 
                     data=json.dumps(mensagem), timeout=10)
-        except:
-            pass
+        except Exception as e:
+            self._safe_print(f"Falha ao enviar mensagem de erro: {e}")
